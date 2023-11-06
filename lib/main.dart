@@ -63,7 +63,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     const SizedBox(width: 16.0),
                     ElevatedButton(
                       onPressed: () {
-                        // homecontroller.uploadImage();
+                        homecontroller.sendAllImage();
                       },
                       child: Text("Upload Image"),
                     ),
@@ -132,9 +132,8 @@ class Homecontroller extends GetxController {
           print("checking model :$imageModel");
           imageModels.add(imageModel);
           for (ModelofsmallImage imageModel in imageModels) {
-           print("Image ID: ${imageModel.id}");
-         }
-
+            print("Image ID: ${imageModel.id}");
+          }
         } else {
           print("Error handling response for $file.path");
         }
@@ -186,6 +185,44 @@ class Homecontroller extends GetxController {
 
     print("File does not exist: $imagePath");
     return null;
+  }
+
+
+
+  Future sendAllImage() async {
+    var headers = {
+      'Content-Type': 'application/json',
+      'Authorization': authToken!,
+    };
+
+    var request = http.MultipartRequest(
+      "POST",
+      Uri.parse('https://staging.simmpli.com/api/v1/wall_posts.json'),
+    );
+
+      request.fields['wall_post[post_body]'] = 'parent section parent section';
+      request.fields['wall_post[active]'] = 'true';
+      request.fields['wall_post[children_ids][0]'] = '2805';
+      request.fields['wall_post[children_ids][1]'] = '2806';
+      request.fields['wall_post[wall_post_type]'] = 'image';
+      request.headers.addAll(headers);
+      
+    try {
+      var response = await request.send().timeout(const Duration(seconds: 60));
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final responseString = await response.stream.bytesToString();
+        return responseString;
+      } else if (response.statusCode == 401) {
+        print("Server returned a 401 Unauthorized error");
+        return null;
+      } else {
+        print("Server returned an error status code: ${response.statusCode}");
+        return null;
+      }
+    } catch (e) {
+      print("Error during the request: $e");
+      return null;
+    }
   }
 }
 
@@ -291,6 +328,3 @@ class Profile {
     );
   }
 }
-
-
-
